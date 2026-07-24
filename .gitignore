@@ -1,0 +1,12 @@
+# CHTC output files
+*.out
+*.err
+*.log
+
+# R files
+.Rhistory
+.RData
+.Rproj.user/
+
+# macOS
+.DS_Store

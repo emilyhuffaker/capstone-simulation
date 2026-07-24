@@ -1,0 +1,301 @@
+---
+title: "Capstone - Simulations"
+author: "Emily Huffaker"
+date: "`r lubridate::today()`"
+format: 
+  html:
+    toc: true 
+    toc_depth: 4
+    embed-resources: true
+editor_options: 
+  chunk_output_type: console
+---
+
+## Simulation Exercise
+
+### Goal
+Generate a population where X1 and X2 have a correlation of .15.
+Draw samples of N = 20.
+Estimate the sample correlation and p-value.
+
+#libraries (updated as needed)
+```{r}
+library(tidyverse)
+library(MASS)
+```
+
+#create simulated population
+```{r}
+set.seed(9499)
+
+population <- as.data.frame(
+  mvrnorm(
+    n = 100000,
+    mu = c(0, 0),
+    Sigma = matrix(
+      c(
+        1, .15,
+        .15, 1
+      ),
+      nrow = 2
+    )
+  )
+)
+
+names(population) <- c("X1", "X2")
+
+cor(population$X1, population$X2)
+```
+> [1] 0.1513428. The generated population correlation is approximately 0.15, which matches the specified population parameter.
+
+# draw a sample
+```{r}
+sample_1 <- population |>
+  slice_sample(n = 20)
+
+sample_1
+```
+
+# store results
+```{r}
+result <- cor.test(
+  sample_1$X1,
+  sample_1$X2
+)
+
+r_value <- unname(result$estimate)
+
+p_value <- result$p.value
+
+r_value
+p_value
+```
+> r = .61695, p = .003759913 
+Although the population correlation is 0.15, the sampled correlation was 0.62. This illustrates sampling variability and motivates repeated sampling through simulation.
+
+
+# More sampling
+```{r}
+run_one_sample <- function(population, n = 20) {
+
+  sample_data <- population |>
+    slice_sample(n = n)
+
+  test <- cor.test(
+    sample_data$X1,
+    sample_data$X2
+  )
+
+  tibble(
+    r = unname(test$estimate),
+    p = test$p.value
+  )
+}
+
+run_one_sample(population)
+```
+> r = .177, p = .455
+Now we can repeat this process many times to see the distribution of sample correlations and p-values.
+
+#Simulation
+
+```{r}
+results <- map_dfr(
+  1:100,
+  ~run_one_sample(population)
+)
+
+results
+```
+
+#Summary & Histogram
+```{r}
+results |>
+  summarize(
+    mean_r = mean(r),
+    sd_r = sd(r),
+    prop_sig = mean(p < .05)
+  )
+
+results |>
+  ggplot(aes(x = r)) +
+  geom_histogram(bins = 15)
+```
+> mean r = .149, sd r = .235, prop sig = .11 
+The average sample correlation across 100 samples is approximately 0.15, which is close to the population correlation of 0.15. However, the standard deviation of the sample correlations is quite large (0.235), indicating substantial variability in the sample estimates. Additionally, only about 11% of the samples yielded a statistically significant result (p < .05), which is consistent with the fact that the true population correlation is relatively small (0.15).
+
+
+#Confirmation question for Markus:
+1. (big picture) The end goal is to create datasets where the true value of path b is known, then compare whether the wide-format Structural Equation Model (SEM) and competing approaches recover that value without bias?
+- YES CORRECT!!
+
+2. (details about the above setup) Are you looking for the results to be stored in a separate file? Or is that something I'll have to do once the simulations are larger?
+- yes pls
+
+3. (next steps) Would you prefer that I build the simulation using nested loops, expand_grid(), or another approach?
+-no preference 
+
+# Simulation Across Multiple Conditions (exercise #4)
+
+First, I create a function that generates a population with a specified correlation between X1 and X2. This allows the simulation to easily generate populations with different correlation values for each experimental condition.
+```{r}
+create_population <- function(rho){
+
+  population <- as.data.frame(
+    MASS::mvrnorm(
+      n = 100000,
+      mu = c(0,0),
+      Sigma = matrix(
+        c(
+          1, rho,
+          rho, 1
+        ),
+        nrow = 2
+      )
+    )
+  )
+
+  names(population) <- c("X1","X2")
+
+  population
+}
+```
+
+Create a function to draw one sample
+```{r}
+run_one_sample <- function(population, n){
+
+  sample_data <- population |>
+    slice_sample(n = n)
+
+  test <- cor.test(
+    sample_data$X1,
+    sample_data$X2
+  )
+
+  tibble(
+    r = unname(test$estimate),
+    p = test$p.value
+  )
+}
+```
+
+Run 100 samples for one condition (ρ = .25, N = 40)
+```{r}
+population <- create_population(.25)
+
+results <- purrr::map_dfr(
+  1:100,
+  ~run_one_sample(population, 40)
+)
+```
+
+summarize the results for that condition
+```{r}
+summary_row <- tibble(
+  sample_size = 40,
+  population_r = .25,
+  mean_r = mean(results$r),
+  sd_r = sd(results$r),
+  prop_sig = mean(results$p < .05)
+)
+
+summary_row
+```
+
+save all 100 samples
+```{r}
+results <- results |>
+  mutate(
+    sample_size = 40,
+    population_r = .25
+  )
+```
+
+loop in all conditions
+```{r}
+set.seed(9499)
+
+sample_sizes <- c(20,40,60)
+
+population_rs <- c(.15,.25,.35)
+
+all_results <- tibble()
+
+summary_results <- tibble()
+```
+
+Run all nine simulation conditions
+```{r}
+for(rho in population_rs){
+
+  population <- create_population(rho)
+
+  for(n in sample_sizes){
+
+    results <- map_dfr(
+      1:100,
+      ~run_one_sample(population,n)
+    )
+
+    results <- results |>
+      mutate(
+        sample_size = n,
+        population_r = rho
+      )
+
+    all_results <- bind_rows(
+      all_results,
+      results
+    )
+
+    summary_results <- bind_rows(
+      summary_results,
+      tibble(
+        sample_size = n,
+        population_r = rho,
+        mean_r = mean(results$r),
+        sd_r = sd(results$r),
+        prop_sig = mean(results$p < .05)
+      )
+    )
+
+  }
+
+}
+```
+
+check if that worked properly
+```{r}
+summary_results
+
+dim(all_results)
+dim(summary_results)
+```
+
+Save the simulation output
+```{r}
+write_csv(
+  all_results,
+  "simulation_data.csv"
+)
+
+write_csv(
+  summary_results,
+  "simulation_summary.csv"
+)
+```
+
+#examples of level 2 studies
+
+Example 1 (Classroom)
+Level 1: students
+Level 2: classroom
+Level 2 variable: teacher experience (5 years, 10 years, 15 years)
+students test grades
+
+Example 2 (Repeated measures)
+Level 1: daily observations/trials
+Level 2: person/patient
+Level 2 variables: age, treatment group, gender
+come up with more examples where individual participants are randomly assigned to a condition within the experinment. 
