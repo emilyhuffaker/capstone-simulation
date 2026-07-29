@@ -10,7 +10,7 @@
 
 This repository contains code and supporting files for my master's capstone project under the supervision of Dr. Markus Brauer at the University of Wisconsin–Madison.
 
-The long-term goal of this project is to investigate the statistical properties of **2-1-1 multilevel mediation models** using Monte Carlo simulation in R. Initial work focuses on building a reproducible simulation framework, scaling simulations with the University of Wisconsin Center for High Throughput Computing (CHTC), and preparing for more complex multilevel mediation analyses.
+The long-term goal of this project is to investigate the statistical properties of 2-1-1 multilevel mediation models using Monte Carlo simulation in R. The current phase of the project focuses on developing reproducible simulation workflows, beginning with simple correlation simulations and extending to latent variable simulations before progressing to full multilevel mediation models. Simulations are executed locally and on the University of Wisconsin Center for High Throughput Computing (CHTC).
 
 ---
 
@@ -33,49 +33,68 @@ Current objectives include:
 ```text
 capstone-simulation/
 │
-├── simulation.R                 # Main simulation script
-├── simulation.sub               # HTCondor submit file
-├── run_simulation.sh            # Shell script executed on CHTC
-├── tidyverse.def                # Apptainer definition file
-├── README.md
+├── simulation.R                     # Correlation simulation
+├── latent_variable_simulation.R     # Latent variable simulation (Step 8)
+├── simulation.sub                 # HTCondor submit file
+├── run_simulation.sh              # Shell script executed on CHTC
+├── tidyverse.def                  # Apptainer container definition
 │
-├── results/                     # Simulation output files
+├── results/
+│   ├── simulation_summary.csv
+│   └── simulation_step8_summary.csv
 │
-├── notes/                       # Project notes and documentation
-│
-└── archive/                     # Previous versions and exploratory analyses
+└──
 ```
 
 > **Note:** Some directories will be added as the project continues to grow.
 
 ---
+## Current Status
+
+This repository currently contains two simulation studies:
+
+1. Correlation simulations examining sampling variability across different sample sizes and population correlations.
+2. Latent variable simulations examining the effects of measurement error on observed regression coefficients and reliability estimates.
+
+These studies serve as the foundation for the larger multilevel mediation simulation project.
 
 ## Current Progress
 
-- ✅ GitHub repository created
-- ✅ R simulation framework completed
-- ✅ Apptainer container built
+- ✅ GitHub repository established
+- ✅ Reproducible Monte Carlo simulation workflow developed in R
+- ✅ Correlation simulation framework completed
+- ✅ Latent variable simulation framework completed
 - ✅ Successfully executed simulations on CHTC
-- ✅ Completed 90,000 simulation replications (10,000 replications across 9 experimental conditions)
-- ⏳ Parallelize simulations across multiple CHTC jobs (Step 7)
-- ⏳ Begin multilevel mediation simulations
+- ✅ Generated and summarized simulation results from 500 replications
+- ✅ Containerized workflow using Apptainer
+
+### Next Steps
+
+- ⏳ Parallelize simulations across multiple CHTC jobs
+- ⏳ Implement 2-1-1 multilevel mediation simulations
+- ⏳ Compare multilevel SEM and wide-format SEM approaches
 
 ---
 
 ## Reproducing the Simulation
 
-To run the simulation locally:
+To run the correlation simulation locally:
 
 ```bash
 Rscript simulation.R
 ```
 
-To submit the simulation to CHTC:
+To run the latent variable simulation:
+
+```bash
+Rscript latent_variable_simulation.R
+```
+
+To submit a simulation to CHTC:
 
 ```bash
 condor_submit simulation.sub
 ```
-
 ---
 
 ## Software and Tools
@@ -93,10 +112,10 @@ condor_submit simulation.sub
 
 Upcoming phases of the project include:
 
-- Parallelize simulation jobs using HTCondor.
-- Implement 2-1-1 multilevel mediation simulations.
+- Parallelize Monte Carlo simulations across multiple CHTC jobs.
+- Develop simulations for 2-1-1 multilevel mediation models.
 - Compare multilevel SEM and wide-format SEM estimation methods.
-- Evaluate parameter bias, standard errors, confidence interval coverage, and statistical power under varying simulation conditions.
+- Evaluate parameter bias, confidence interval coverage, statistical power, and Type I error across varying simulation conditions.
 
 ---
 
