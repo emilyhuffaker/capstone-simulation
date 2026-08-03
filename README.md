@@ -37,30 +37,33 @@ The primary objectives of this project are to:
 ```text
 capstone-simulation/
 │
-├── simulation.R
-│   └── Correlation simulation across multiple conditions
+├── results/
+│   └── Simulation output and summary files
+│
+├── .gitignore
+│   └── Specifies files that should not be tracked by Git
+│
+├── First Simulations.qmd
+│   └── Quarto document containing the initial simulation exercises
 │
 ├── latent_variable_simulation.R
 │   └── Latent-variable simulation completed for Exercise 8
 │
-├── simulation.sub
-│   └── HTCondor submission instructions
-│
 ├── run_simulation.sh
-│   └── Shell script used to execute simulations on CHTC
+│   └── Shell script used to execute simulations through CHTC
 │
-├── tidyverse.def
-│   └── Apptainer container definition
+├── simulation.R
+│   └── Correlation simulation across multiple conditions
 │
-├── results/
-│   ├── simulation_summary.csv
-│   └── simulation_step8_summary.csv
+├── simulation2.R
+│   └── Parameterized correlation simulation for running one condition per CHTC job
+│
+├── simulation2.sub
+│   └── HTCondor submission file used to run the simulation conditions as separate jobs
 │
 └── README.md
+    └── Project overview and documentation
 ```
-
-Additional scripts, submission files, and result folders will be added as the project develops.
-
 ---
 
 ## Current Simulation Studies
@@ -130,29 +133,52 @@ These preliminary studies establish the computational and statistical foundation
 
 ## Reproducing the Simulations
 
-To run the correlation simulation locally:
+### Initial simulation exercises
+
+The initial simulation exercises and explanations are documented in:
+
+```text
+First Simulations.qmd
+```
+
+This file can be opened and rendered using RStudio and Quarto.
+
+### Correlation simulation
+
+To run the original correlation simulation locally:
 
 ```bash
 Rscript simulation.R
 ```
 
-To run the latent-variable simulation locally:
+### Single-condition correlation simulation
+
+The parameterized simulation script is designed to run one combination of sample size and population correlation at a time:
+
+```bash
+Rscript simulation2.R
+```
+When used through CHTC, the parameter values are supplied by the HTCondor submission workflow.
+
+### Latent-variable simulation
+
+To run the Exercise 8 latent-variable simulation locally:
 
 ```bash
 Rscript latent_variable_simulation.R
 ```
 
-To submit a simulation to CHTC:
+### CHTC submission
+
+To submit the separate correlation simulation jobs through CHTC:
 
 ```bash
-condor_submit simulation.sub
+condor_submit simulation2.sub
 ```
 
-The required R environment is provided through the Apptainer container defined in:
+The submission file uses `run_simulation.sh` to execute the relevant simulation job.
 
-```text
-tidyverse.def
-```
+Simulation output and summary files are stored in the `results/` directory.
 
 ---
 
