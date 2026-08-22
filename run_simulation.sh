@@ -1,10 +1,7 @@
 #!/bin/bash
 
-echo "Job started on $(hostname)"
-echo "rho = $1"
-echo "sample size = $2"
+echo "Job started on $(date)"
 
-Rscript simulation2.R "$1" "$2"
+Rscript latent_variable_simulation.R
 
-echo "Job finished"
-ls -lh
+echo "Job finished on $(date)"

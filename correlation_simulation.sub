@@ -1,0 +1,17 @@
+container_image = capstone_simulation.sif
+
+shell = Rscript exercise_06_chtc_simulation.R
+
+should_transfer_files = YES
+transfer_input_files = exercise_06_chtc_simulation.R
+transfer_output_files = exercise_06_simulation_summary.csv
+
+log = exercise_06.log
+output = exercise_06.out
+error = exercise_06.err
+
+request_cpus = 1
+request_memory = 2GB
+request_disk = 3GB
+
+queue

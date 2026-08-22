@@ -92,6 +92,7 @@ population_observed <- population_observed |>
     )
   )
 
+# standarize the med1 & med2 average scores
 
 # Unstandardized population model
 population_model <- lm(
@@ -328,7 +329,7 @@ simulation_summary <- tibble(
 
 
 # View the results
-print(simulation_summary)
+print(simulation_summary)0
 
 
 # Save the one-row output file
@@ -336,3 +337,6 @@ write_csv(
   simulation_summary,
   "simulation_step8_summary.csv"
 )
+
+
+#analyze pop itself and does it have the charicteristics I want it to have. & check med1 to med2 PATH. The actual path. 
