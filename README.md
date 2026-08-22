@@ -1,19 +1,19 @@
 # Capstone Simulation Project
 
-**Author:** Emily Huffaker\
-**University:** University of Wisconsin–Madison\
-**Program:** M.S. Data Science in Human Behavior\
+**Author:** Emily Huffaker  
+**University:** University of Wisconsin–Madison  
+**Program:** M.S. Data Science in Human Behavior  
 **Advisor:** Dr. Markus Brauer
 
 ---
 
 ## Overview
 
-This repository contains code, submission files, and results from my master's capstone project under the supervision of Dr. Markus Brauer at the University of Wisconsin–Madison.
+This repository contains code, CHTC submission files, and simulation results from my master's capstone project under the supervision of Dr. Markus Brauer at the University of Wisconsin–Madison.
 
-The long-term goal of this project is to investigate the statistical properties of 2-1-1 multilevel mediation models using Monte Carlo simulation in R. The current phase focuses on developing reproducible simulation workflows, beginning with correlation simulations and extending to latent-variable models before progressing to full multilevel mediation simulations.
+The broader goal of this project is to investigate the statistical properties of 2-1-1 multilevel mediation models using Monte Carlo simulation in R. The current work establishes the computational and statistical framework needed for the full mediation study by progressing from simple correlation simulations to simulations involving latent variables, measurement error, multiple parameter conditions, and parallel computing.
 
-The simulations are run both locally and through the University of Wisconsin Center for High Throughput Computing (CHTC). CHTC is used to distribute simulation conditions across separate computing jobs and efficiently run a large number of replications.
+Simulations are run using R and the University of Wisconsin Center for High Throughput Computing (CHTC). CHTC is used both to run complete simulation studies and to distribute individual simulation conditions across separate computing jobs.
 
 ---
 
@@ -25,10 +25,114 @@ The primary objectives of this project are to:
 * Generate populations with known statistical properties.
 * Draw repeated random samples from simulated populations.
 * Examine sampling variability across different parameter conditions.
-* Estimate latent-variable models using `lavaan`.
-* Scale simulations by distributing conditions across separate CHTC jobs.
-* Extend the simulation framework to 2-1-1 multilevel mediation models.
+* Simulate latent constructs using multiple observed indicators.
+* Examine the effects of measurement quality and sample size on parameter estimates.
+* Scale simulation studies by distributing conditions across separate CHTC jobs.
+* Develop the simulation framework needed for 2-1-1 multilevel mediation models.
 * Compare multilevel SEM and wide-format SEM estimation approaches.
+
+---
+
+## Simulation Development
+
+### 1. Correlation Simulation
+
+The initial simulation examines sampling variability in Pearson correlations.
+
+Simulated populations are generated with known population correlations of:
+
+* 0.15
+* 0.25
+* 0.35
+
+Samples of:
+
+* 20
+* 40
+* 60
+
+are repeatedly drawn from each population.
+
+For every condition, 10,000 samples are drawn and summarized using:
+
+* Mean estimated correlation
+* Standard deviation of estimated correlations
+* Proportion of statistically significant correlations
+
+This produces nine combinations of population correlation and sample size.
+
+The simulation was first run as a single CHTC job containing all nine conditions and was then restructured so that the nine conditions could run as nine separate CHTC jobs in parallel.
+
+---
+
+### 2. Latent-Variable Simulation
+
+The next stage extends the simulation framework to variables measured using multiple observed indicators.
+
+Two latent constructs are simulated, with the first construct having a known causal effect on the second. Each construct is measured using four observed indicators containing measurement error.
+
+Repeated samples are drawn from the simulated population and composite scores are created from the observed indicators.
+
+For each simulation condition, the following quantities are summarized:
+
+* Mean unstandardized regression coefficient
+* Standard deviation of unstandardized regression coefficients
+* Mean standardized regression coefficient
+* Standard deviation of standardized regression coefficients
+* Percentage of statistically significant effects
+* Mean correlation between the two composite measures
+* Mean inter-item correlation for the first construct
+* Mean inter-item correlation for the second construct
+
+---
+
+### 3. Latent-Variable Simulation Across 24 Conditions
+
+The latent-variable simulation was expanded to systematically vary four population and sample characteristics:
+
+* Causal effect: 0.3 or 0.5
+* Factor loading for indicators of the first latent variable: 0.6 or 0.8
+* Factor loading for indicators of the second latent variable: 0.6 or 0.8
+* Sample size: 100, 200, or 500
+
+This creates:
+
+```text
+2 × 2 × 2 × 3 = 24 simulation conditions
+```
+
+For each of the 24 conditions, 500 samples are drawn.
+
+The resulting summary contains one row per condition and 12 columns:
+
+* Four columns identifying the simulation condition
+* Eight columns containing the simulation results
+
+The complete simulation was first run as a single CHTC job.
+
+---
+
+### 4. Parallel 24-Condition Simulation
+
+The 24-condition latent-variable simulation was then converted to a parallel CHTC workflow.
+
+Instead of one CHTC job processing all 24 conditions, each condition is assigned to an independent job:
+
+```text
+24 conditions → 24 CHTC jobs
+```
+
+Each job:
+
+1. Receives one combination of simulation parameters.
+2. Generates the corresponding population.
+3. Draws 500 samples.
+4. Calculates the requested statistics.
+5. Writes a one-row summary file.
+
+The 24 one-row output files are then combined into a final 24-row × 12-column summary.
+
+This workflow establishes the parallel-computing structure that will be used for the larger capstone simulation study.
 
 ---
 
@@ -38,68 +142,71 @@ The primary objectives of this project are to:
 capstone-simulation/
 │
 ├── results/
-│   └── Simulation output and summary files
+│   ├── correlation_simulation_summary.csv
+│   ├── correlation_simulation_parallel_summary.csv
+│   ├── simulation_latentvariable_summary.csv
+│   ├── latentvariable_across_24cond_summary.csv
+│   └── latentvariable_across_24cond_parallel_summary.csv
 │
 ├── .gitignore
-│   └── Specifies files that should not be tracked by Git
 │
 ├── First Simulations.qmd
 │   └── Quarto document containing the initial simulation exercises
 │
+├── correlation_simulation.R
+│   └── Correlation simulation across nine conditions
+│
+├── correlation_simulation.sub
+│   └── CHTC submission file for the single-job correlation simulation
+│
+├── capstone_simulation.def
+│   └── Apptainer definition file for the correlation simulation environment
+│
+├── correlation_simulation_parallel.R
+│   └── Parameterized correlation simulation for one condition at a time
+│
+├── correlation_simulation_parallel.sub
+│   └── CHTC submission file for nine parallel correlation jobs
+│
+├── correlation_conditions.txt
+│   └── Parameter combinations for the parallel correlation simulation
+│
+├── correlation_parallel.def
+│   └── Apptainer definition file for the parallel correlation workflow
+│
+├── correlation_parallel_combine.R
+│   └── Combines the nine correlation condition summaries
+│
 ├── latent_variable_simulation.R
-│   └── Latent-variable simulation completed for Exercise 8
+│   └── Initial latent-variable simulation
 │
-├── run_simulation.sh
-│   └── Shell script used to execute simulations through CHTC
+├── latentvariable_across_24cond.R
+│   └── Latent-variable simulation across 24 parameter conditions
 │
-├── simulation.R
-│   └── Correlation simulation across multiple conditions
+├── latentvariable_across_24cond.sub
+│   └── CHTC submission file for the 24-condition simulation
 │
-├── simulation2.R
-│   └── Parameterized correlation simulation for running one condition per CHTC job
+├── latentvariable_across_24cond.def
+│   └── Apptainer definition file for the 24-condition simulation
 │
-├── simulation2.sub
-│   └── HTCondor submission file used to run the simulation conditions as separate jobs
+├── latentvariable_across_24cond_parallel.R
+│   └── Parameterized latent-variable simulation for one condition per job
+│
+├── latentvariable_across_24cond_parallel.sub
+│   └── CHTC submission file for 24 parallel jobs
+│
+├── latentvariable_24cond_conditions.txt
+│   └── Parameter combinations for the 24 parallel jobs
+│
+├── latentvariable_across_24cond_parallel.def
+│   └── Apptainer definition file for the parallel latent-variable workflow
+│
+├── latentvariable_across_24cond_parallel_combine.R
+│   └── Combines the 24 individual condition summaries
 │
 └── README.md
     └── Project overview and documentation
 ```
----
-
-## Current Simulation Studies
-
-### 1. Correlation Simulation
-
-The first simulation study examines sampling variability in correlation estimates across combinations of:
-
-* Population correlation
-* Sample size
-* Number of simulation replications
-
-For each condition, repeated samples are drawn from a simulated population. The resulting correlation estimates and significance tests are summarized to evaluate:
-
-* Mean estimated correlation
-* Standard deviation of the estimated correlations
-* Proportion of statistically significant results
-
-The nine simulation conditions were also submitted to CHTC as nine separate jobs rather than being run together within one nested loop.
-
-### 2. Latent-Variable Simulation
-
-The second simulation study extends the workflow to a latent-variable model estimated using `lavaan`.
-
-The simulation generates two latent variables and their observed indicators, draws repeated samples, estimates the specified model, and summarizes parameter estimates across 500 replications.
-
-This study provides practice with:
-
-* Simulating latent constructs
-* Specifying factor loadings
-* Modeling measurement error
-* Estimating structural paths between latent variables
-* Extracting and summarizing model parameters
-* Running latent-variable simulations through CHTC
-
-These preliminary studies establish the computational and statistical foundation for the larger 2-1-1 multilevel mediation project.
 
 ---
 
@@ -107,78 +214,114 @@ These preliminary studies establish the computational and statistical foundation
 
 * ✅ GitHub repository established
 * ✅ Reproducible Monte Carlo simulation workflow developed in R
-* ✅ Correlation simulation framework completed
-* ✅ Simulations run across nine parameter combinations
-* ✅ Nine simulation conditions submitted as separate CHTC jobs
+* ✅ Basic correlation simulation completed
+* ✅ Nine correlation conditions evaluated with 10,000 samples per condition
+* ✅ Correlation simulation successfully executed as a single CHTC job
+* ✅ Nine correlation conditions successfully executed as nine separate CHTC jobs
 * ✅ Latent-variable simulation framework completed
-* ✅ Latent-variable model estimated using `lavaan`
-* ✅ Simulation results generated and summarized across 500 replications
-* ✅ Simulations successfully executed through CHTC
-* ✅ Apptainer container corrected using CHTC recipe guidance
-* ✅ Output files successfully transferred from CHTC
-
----
-
-## Next Steps
-
-* ⏳ Expand the latent-variable simulation across multiple parameter conditions.
-* ⏳ Systematically vary the causal effect, factor loadings, and sample size.
-* ⏳ Run each latent-variable simulation condition as a separate CHTC job.
-* ⏳ Combine the results into a single summary file.
-* ⏳ Develop simulations for 2-1-1 multilevel mediation models.
-* ⏳ Compare multilevel SEM and wide-format SEM approaches.
-* ⏳ Evaluate bias, confidence interval coverage, statistical power, and Type I error.
+* ✅ Latent constructs represented using multiple observed indicators
+* ✅ Measurement quality incorporated through varying factor loadings
+* ✅ Latent-variable simulation expanded across 24 parameter combinations
+* ✅ 500 samples evaluated for each of the 24 conditions
+* ✅ 24-condition simulation successfully executed through CHTC
+* ✅ 24 conditions successfully distributed across 24 separate CHTC jobs
+* ✅ Parallel outputs combined into a single 24-row × 12-column summary
+* ✅ Reproducible Apptainer environments created for CHTC workflows
+* ✅ Preliminary simulation exercises completed
 
 ---
 
 ## Reproducing the Simulations
 
-### Initial simulation exercises
+### Correlation Simulation
 
-The initial simulation exercises and explanations are documented in:
+Run the nine-condition correlation simulation:
+
+```bash
+Rscript correlation_simulation.R
+```
+
+To submit the simulation through CHTC:
+
+```bash
+condor_submit correlation_simulation.sub
+```
+
+---
+
+### Parallel Correlation Simulation
+
+The parallel correlation simulation accepts one sample size and population correlation per job.
+
+The parameter combinations are stored in:
 
 ```text
-First Simulations.qmd
+correlation_conditions.txt
 ```
 
-This file can be opened and rendered using RStudio and Quarto.
-
-### Correlation simulation
-
-To run the original correlation simulation locally:
+Submit the nine jobs with:
 
 ```bash
-Rscript simulation.R
+condor_submit correlation_simulation_parallel.sub
 ```
 
-### Single-condition correlation simulation
-
-The parameterized simulation script is designed to run one combination of sample size and population correlation at a time:
+The individual condition summaries can then be combined using:
 
 ```bash
-Rscript simulation2.R
+Rscript correlation_parallel_combine.R
 ```
-When used through CHTC, the parameter values are supplied by the HTCondor submission workflow.
 
-### Latent-variable simulation
+---
 
-To run the Exercise 8 latent-variable simulation locally:
+### Initial Latent-Variable Simulation
+
+Run the initial latent-variable simulation using:
 
 ```bash
 Rscript latent_variable_simulation.R
 ```
 
-### CHTC submission
+---
 
-To submit the separate correlation simulation jobs through CHTC:
+### 24-Condition Latent-Variable Simulation
+
+Run the full 24-condition simulation using:
 
 ```bash
-condor_submit simulation2.sub
+Rscript latentvariable_across_24cond.R
 ```
 
-The submission file uses `run_simulation.sh` to execute the relevant simulation job.
+To run it through CHTC:
 
-Simulation output and summary files are stored in the `results/` directory.
+```bash
+condor_submit latentvariable_across_24cond.sub
+```
+
+---
+
+### Parallel 24-Condition Simulation
+
+The parallel version assigns one parameter combination to each CHTC job.
+
+The 24 parameter combinations are stored in:
+
+```text
+latentvariable_24cond_conditions.txt
+```
+
+Submit all 24 jobs using:
+
+```bash
+condor_submit latentvariable_across_24cond_parallel.sub
+```
+
+After all jobs finish, combine the individual condition summaries using:
+
+```bash
+Rscript latentvariable_across_24cond_parallel_combine.R
+```
+
+Simulation summary files are stored in the `results/` directory.
 
 ---
 
@@ -187,32 +330,33 @@ Simulation output and summary files are stored in the `results/` directory.
 * R
 * tidyverse
 * MASS
-* lavaan
 * HTCondor
 * Apptainer
+* Quarto
 * Git
 * GitHub
 
 ---
 
-## Future Work
+## Next Steps
 
-Later stages of the project will focus on developing full 2-1-1 multilevel mediation simulations. These simulations will be used to compare different estimation approaches under varying research conditions.
+With the preliminary simulation exercises complete, the next phase of the project will focus on developing the full 2-1-1 multilevel mediation simulation.
 
-Potential evaluation criteria include:
+Planned work includes:
 
-* Parameter bias
-* Standard error accuracy
-* Confidence interval coverage
-* Statistical power
-* Type I error
-* Convergence rates
-* Performance across different sample sizes and cluster structures
+* Define the population-generating model for the 2-1-1 mediation structure.
+* Systematically vary population and measurement characteristics.
+* Implement multilevel SEM estimation.
+* Implement the wide-format SEM approach.
+* Run large-scale simulation conditions through CHTC.
+* Compare parameter recovery across estimation approaches.
+* Evaluate bias, confidence interval coverage, statistical power, Type I error, and convergence.
+* Summarize and interpret simulation results for the capstone manuscript.
 
 ---
 
 ## Project Advisor
 
-**Dr. Markus Brauer**\
-Department of Psychology\
+**Dr. Markus Brauer**  
+Department of Psychology  
 University of Wisconsin–Madison
