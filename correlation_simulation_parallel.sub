@@ -1,0 +1,17 @@
+container_image = correlation_parallel.sif
+
+shell = Rscript correlation_simulation_parallel.R $(sample_size) $(population_r)
+
+should_transfer_files = YES
+transfer_input_files = correlation_simulation_parallel.R
+transfer_output_files = correlation_summary_n$(sample_size)_r$(population_r).csv
+
+log = correlation_parallel_$(sample_size)_$(population_r).log
+output = correlation_parallel_$(sample_size)_$(population_r).out
+error = correlation_parallel_$(sample_size)_$(population_r).err
+
+request_cpus = 1
+request_memory = 2GB
+request_disk = 3GB
+
+queue sample_size, population_r from correlation_conditions.txt
