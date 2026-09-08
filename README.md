@@ -1,8 +1,8 @@
 # Capstone Simulation Project
 
-**Author:** Emily Huffaker
-**University:** University of Wisconsin–Madison
-**Program:** M.S. Data Science in Human Behavior
+**Author:** Emily Huffaker\
+**University:** University of Wisconsin–Madison\
+**Program:** M.S. Data Science in Human Behavior\
 **Advisor:** Dr. Markus Brauer
 
 ---
